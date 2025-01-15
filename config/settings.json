@@ -1,0 +1,17 @@
+{
+    "projects": {
+        "TCP-Introduction": {
+            "dependencies": [],
+            "dependents": [],
+            "guid": "23E52AEA-3A15-4BD4-1503-49A218F24A6B",
+            "lib": false,
+            "pch": false,
+            "vcpkg": false,
+            "window": false
+        }
+    },
+    "solution_guid": "3B7216F6-6753-5371-25A6-20CA79C270A0",
+    "solution_name": "TCP-Introduction",
+    "startup_project": "TCP-Introduction",
+    "version": "1.17.3"
+}
