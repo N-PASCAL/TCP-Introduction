@@ -68,7 +68,7 @@ int main()
     server.sin_family = AF_INET;
     server.sin_port = htons(6666);
         
-    if (connect(sckt, reinterpret_cast<sockaddr*>(&server), sizeof(server)) == SOCKET_ERROR)
+    if (connect(sckt, reinterpret_cast<sockaddr*>(&server), sizeof(server)) != SOCKET_ERROR)
     {
         std::cerr << "Socket creation failed with error: " << WSAGetLastError() << "\n";
         return 0;
