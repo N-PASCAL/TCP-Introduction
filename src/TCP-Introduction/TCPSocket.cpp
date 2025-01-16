@@ -27,6 +27,6 @@ bool TCPSocket::Connect(const std::string& ipaddress, unsigned short port)
     inet_pton(AF_INET, "127.0.0.1", &server.sin_addr.s_addr);
     server.sin_family = AF_INET;
     server.sin_port = htons(port);
-    return connect(mSocket, reinterpret_cast<sockaddr*>(&server), sizeof(server)) == 0;
+    return connect(mSocket, reinterpret_cast<sockaddr*>(&server), sizeof(server)) != 0;
 }
 
