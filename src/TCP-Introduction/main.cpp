@@ -67,14 +67,14 @@ int main()
     inet_pton(AF_INET, "127.0.0.1", &server.sin_addr.s_addr);
     server.sin_family = AF_INET;
     server.sin_port = htons(6666);
-    
+        
     if (connect(sckt, reinterpret_cast<sockaddr*>(&server), sizeof(server)) == SOCKET_ERROR)
     {
         std::cerr << "Socket creation failed with error: " << WSAGetLastError() << "\n";
         return 0;
     }
     std::cout << "Connected" << "\n";
-    
+
     closesocket(sckt);
     WSACleanup();
     return 0;
