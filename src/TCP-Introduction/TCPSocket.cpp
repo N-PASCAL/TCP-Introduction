@@ -1,4 +1,6 @@
 #include "TCPSocket.h"
+
+#include <iostream>
 #include <sstream>
 
 
@@ -39,9 +41,22 @@ bool TCPSocket::Connect(const std::string& ipaddress, unsigned short port)
         - flags est un masque d'options. Généralement 0.
      */
 
-int TCPSocket::Send(const char* data, unsigned int len)
+//  [I-Protocole] Modification de Send
+    /*
+        unsigned char : Permet de rester sur l'intervalle [0;255]
+        
+        Le protocole commence par envoyer la longueur des données, puis les données à proprement parler.
+        
+        Les conversions nécessaires pour le passage des paramètres à l'API sockets,
+        et enfin, on s'assure que les données envoyées l'ont été avec succès en vérifiant que
+        les tailles mises en file d'envoi sont celles attendues.
+     */
+
+bool TCPSocket::Send(const unsigned char* data, unsigned short len)
 {
-    return send(mSocket, data, len, 0);
+    unsigned short networkLen = htons(len);
+    return send(mSocket, reinterpret_cast<const char*>(& networkLen), sizeof(networkLen), 0) == sizeof(networkLen)
+        && send(mSocket, reinterpret_cast<const char*>(data), len, 0) == len;
 }
 
 
@@ -54,8 +69,33 @@ int TCPSocket::Send(const char* data, unsigned int len)
         - flags est un masque d'options. Généralement 0.
      */
 
-int TCPSocket::Receive(char* buffer, unsigned int len)
+//  [II-Protocole] Modification de Receive
+bool TCPSocket::Receive(std::vector<unsigned char>& buffer)
 {
-    return recv(mSocket, buffer, len, 0);
+    unsigned short expectedSize;
+    int pending = recv(mSocket, reinterpret_cast<char*>(&expectedSize), sizeof(expectedSize), 0);
+    if ( pending <= 0 || pending != sizeof(unsigned short) )
+    {
+        std::cout << "Receive failed : " << Sockets::GetError() << "\n";
+        return false;
+    }
+	
+    expectedSize = ntohs(expectedSize);
+    buffer.resize(expectedSize);
+    int receivedSize = 0;
+    do {
+        int ret = recv(mSocket, reinterpret_cast<char*>(&buffer[receivedSize]), (expectedSize - receivedSize) * sizeof(unsigned char), 0);
+        if ( ret <= 0 )
+        {
+            std::cout << "Receive buffer can't receive all data : " << Sockets::GetError() << "\n";
+            buffer.clear();
+            return false;
+        }
+        else
+        {
+            receivedSize += ret;
+        }
+    } while ( receivedSize < expectedSize );
+    return true;
 }
 
