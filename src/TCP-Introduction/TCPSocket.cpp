@@ -1,8 +1,6 @@
 #include "TCPSocket.h"
-
 #include <iostream>
 #include <sstream>
-
 
 TCPSocket::TCPSocket()
 {
@@ -97,5 +95,5 @@ bool TCPSocket::Receive(std::vector<unsigned char>& buffer)
         }
     } while ( receivedSize < expectedSize );
     return true;
-}
+} 
 

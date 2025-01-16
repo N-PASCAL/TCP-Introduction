@@ -8,6 +8,15 @@
             "pch": false,
             "vcpkg": false,
             "window": false
+        },
+        "TCP-Serveur": {
+            "dependencies": [],
+            "dependents": [],
+            "guid": "768A55ED-3501-78BA-40A1-4DE85C921CC4",
+            "lib": false,
+            "pch": false,
+            "vcpkg": false,
+            "window": false
         }
     },
     "solution_guid": "3B7216F6-6753-5371-25A6-20CA79C270A0",
