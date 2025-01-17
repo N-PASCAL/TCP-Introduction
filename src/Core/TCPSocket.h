@@ -10,6 +10,7 @@ class TCPSocket
 {
 public:
     TCPSocket();
+    TCPSocket(SOCKET socket) : m_socket(socket) {}
     ~TCPSocket();
 
     bool Connect(const std::string& ipAddress, unsigned short port);
@@ -17,7 +18,7 @@ public:
     bool Receive(std::vector<unsigned char>& buffer);
 
 private:
-    SOCKET mSocket;
+    SOCKET m_socket;
 };
 
 #endif 

@@ -1,7 +1,21 @@
 {
     "projects": {
-        "TCP-Introduction": {
+        "Core": {
             "dependencies": [],
+            "dependents": [
+                "TCP-Introduction",
+                "TCP-Serveur"
+            ],
+            "guid": "65331A27-6329-3B79-17B6-15E65B522106",
+            "lib": true,
+            "pch": false,
+            "vcpkg": false,
+            "window": false
+        },
+        "TCP-Introduction": {
+            "dependencies": [
+                "Core"
+            ],
             "dependents": [],
             "guid": "23E52AEA-3A15-4BD4-1503-49A218F24A6B",
             "lib": false,
@@ -10,7 +24,9 @@
             "window": false
         },
         "TCP-Serveur": {
-            "dependencies": [],
+            "dependencies": [
+                "Core"
+            ],
             "dependents": [],
             "guid": "768A55ED-3501-78BA-40A1-4DE85C921CC4",
             "lib": false,

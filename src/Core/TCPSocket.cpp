@@ -4,8 +4,8 @@
 
 TCPSocket::TCPSocket()
 {
-    mSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (mSocket == INVALID_SOCKET)
+    m_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (m_socket == INVALID_SOCKET)
     {
         std::ostringstream error;
         error << "Erreur initialisation socket [" << Sockets::GetError() << "]";
@@ -16,7 +16,7 @@ TCPSocket::TCPSocket()
 
 TCPSocket::~TCPSocket()
 {
-    Sockets::CloseSocket(mSocket);
+    Sockets::CloseSocket(m_socket);
 }
 
 
@@ -26,7 +26,7 @@ bool TCPSocket::Connect(const std::string& ipaddress, unsigned short port)
     inet_pton(AF_INET, "127.0.0.1", &server.sin_addr.s_addr);
     server.sin_family = AF_INET;
     server.sin_port = htons(port);
-    return connect(mSocket, reinterpret_cast<sockaddr*>(&server), sizeof(server)) != 0;
+    return connect(m_socket, reinterpret_cast<sockaddr*>(&server), sizeof(server)) != 0;
 }
 
 
@@ -53,8 +53,8 @@ bool TCPSocket::Connect(const std::string& ipaddress, unsigned short port)
 bool TCPSocket::Send(const unsigned char* data, unsigned short len)
 {
     unsigned short networkLen = htons(len);
-    return send(mSocket, reinterpret_cast<const char*>(& networkLen), sizeof(networkLen), 0) == sizeof(networkLen)
-        && send(mSocket, reinterpret_cast<const char*>(data), len, 0) == len;
+    return send(m_socket, reinterpret_cast<const char*>(& networkLen), sizeof(networkLen), 0) == sizeof(networkLen)
+        && send(m_socket, reinterpret_cast<const char*>(data), len, 0) == len;
 }
 
 
@@ -71,7 +71,7 @@ bool TCPSocket::Send(const unsigned char* data, unsigned short len)
 bool TCPSocket::Receive(std::vector<unsigned char>& buffer)
 {
     unsigned short expectedSize;
-    int pending = recv(mSocket, reinterpret_cast<char*>(&expectedSize), sizeof(expectedSize), 0);
+    int pending = recv(m_socket, reinterpret_cast<char*>(&expectedSize), sizeof(expectedSize), 0);
     if ( pending <= 0 || pending != sizeof(unsigned short) )
     {
         std::cout << "Receive failed : " << Sockets::GetError() << "\n";
@@ -82,7 +82,7 @@ bool TCPSocket::Receive(std::vector<unsigned char>& buffer)
     buffer.resize(expectedSize);
     int receivedSize = 0;
     do {
-        int ret = recv(mSocket, reinterpret_cast<char*>(&buffer[receivedSize]), (expectedSize - receivedSize) * sizeof(unsigned char), 0);
+        int ret = recv(m_socket, reinterpret_cast<char*>(&buffer[receivedSize]), (expectedSize - receivedSize) * sizeof(unsigned char), 0);
         if ( ret <= 0 )
         {
             std::cout << "Receive buffer can't receive all data : " << Sockets::GetError() << "\n";

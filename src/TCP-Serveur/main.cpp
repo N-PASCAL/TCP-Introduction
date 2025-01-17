@@ -1,58 +1,67 @@
 #include "TCPServer.h"
 #include <iostream>
+#include <vector>
+#include <string>
 
 int main()
 {
-    // Démarrage de la bibliothèque Winsock
     if (!Sockets::Start())
     {
-        std::cout << "Erreur initialisation : " << Sockets::GetError() << "\n";
-        return 0;
+        std::cerr << "Erreur initialisation : " << Sockets::GetError() << "\n";
+        return -1;
     }
 
-    try
+    TCPServer server;
+    if (!server.Bind("127.0.0.1", 6666))
     {
-        TCPServer server;
-
-        // Association du socket à l'adresse et au port
-        if (!server.Bind("127.0.0.1", 6666))
-        {
-            std::cout << "Erreur bind : " << Sockets::GetError() << "\n";
-            return 0;
-        }
-
-        // Mise en écoute du serveur
-        if (!server.Listen(SOMAXCONN))
-        {
-            std::cout << "Erreur listen : " << Sockets::GetError() << "\n";
-            return 0;
-        }
-        std::cout << "Serveur en écoute sur le port 6666..." << "\n";
-
-        // Attente de connexion client
-        sockaddr_in clientAddr = {};
-        int clientAddrSize = sizeof(clientAddr);
-        SOCKET clientSocket = server.Accept(reinterpret_cast<sockaddr*>(&clientAddr), &clientAddrSize);
-
-        if (clientSocket == INVALID_SOCKET)
-        {
-            std::cout << "Erreur accept : " << Sockets::GetError() << "\n";
-            return 0;
-        }
-
-        // Affiche l'adresse IP du client connecté
-        std::cout << "Client connecté depuis : " << Sockets::GetAddress(clientAddr) << "\n";
-
-        // Ferme le socket client après la connexion
-        Sockets::CloseSocket(clientSocket);
-        std::cout << "Connexion fermée avec le client.\n";
+        std::cerr << "Erreur bind : " << Sockets::GetError() << "\n";
+        Sockets::Release();
+        return -1;
     }
-    catch (const std::exception& e)
+    std::cout << "Serveur lié à 127.0.0.1:6666\n";
+
+    if (!server.Listen())
     {
-        std::cout << "Exception : " << e.what() << "\n";
+        std::cerr << "Erreur écoute : " << Sockets::GetError() << "\n";
+        Sockets::Release();
+        return -1;
+    }
+    std::cout << "Serveur en écoute...\n";
+
+    while (true) // Boucle principale du serveur
+    {
+        TCPSocket client = server.Accept();
+        if (client.Send(nullptr, 0)) // Vérifie si le socket est valide
+        {
+            std::cerr << "Erreur acceptation : " << Sockets::GetError() << "\n";
+            continue; // Ignore cette connexion et retourne à l'écoute
+        }
+        std::cout << "Connexion acceptée !\n";
+
+        while (true) 
+        {
+            std::vector<unsigned char> buffer;
+            if (!client.Receive(buffer)) 
+            {
+                std::cerr << "Le client s'est déconnecté ou une erreur s'est produite.\n";
+                break; 
+            }
+
+            std::string receivedMessage(buffer.begin(), buffer.end());
+            std::cout << "Message reçu : " << receivedMessage << "\n";
+
+            const std::string response = "Message reçu";
+            if (!client.Send(reinterpret_cast<const unsigned char*>(response.c_str()), response.size()))
+            {
+                std::cerr << "Erreur envoi : " << Sockets::GetError() << "\n";
+                break; 
+            }
+            std::cout << "Réponse envoyée : " << response << "\n";
+        }
+
+        std::cout << "Fin de la connexion avec le client.\n";
     }
 
-    // Libération de Winsock
     Sockets::Release();
     return 0;
 }

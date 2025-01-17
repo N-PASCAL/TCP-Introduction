@@ -1,12 +1,12 @@
 #include "TCPServer.h"
-
+#include "Sockets.h"
 #include <iostream>
 #include <sstream>
 
 TCPServer::TCPServer()
 {
-    mServer = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (mServer == INVALID_SOCKET)
+    m_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (m_socket == INVALID_SOCKET)
     {
         std::ostringstream error;
         error << "Erreur initialisation server [" << Sockets::GetError() << "]";
@@ -17,7 +17,7 @@ TCPServer::TCPServer()
 
 TCPServer::~TCPServer()
 {
-    Sockets::CloseSocket(mServer);
+    Sockets::CloseSocket(m_socket);
 }
 
 
@@ -29,73 +29,75 @@ TCPServer::~TCPServer()
         - namelen est la taille de cette structure, généralement un sizeof fera l'affaire.
      */
 
-// bool TCPServer::Bind(SOCKET sckt, const struct addr* name, int namelen)
-// {
-//     int res = bind(mServer, reinterpret_cast<sockaddr*>(&name), sizeof(namelen));
-//     if (res != 0)
-//     {
-//         std::cout << "Erreur bind : " << Sockets::GetError() << "\n";
-//         return SOCKET_ERROR;
-//     }
-//     std::cout << "Bind : " << "\n";
-// }
-
-bool TCPServer::Bind(const std::string& ipAddress, unsigned short port)
+bool TCPServer::Bind(const std::string& ip, unsigned short port)
 {
-    sockaddr_in serverAddr = {};
-    serverAddr.sin_family = AF_INET;
-    inet_pton(AF_INET, ipAddress.c_str(), &serverAddr.sin_addr.s_addr);
-    serverAddr.sin_port = htons(port);
-
-    if (bind(mServer, reinterpret_cast<sockaddr*>(&serverAddr), sizeof(serverAddr)) != 0)
-    {
-        std::cout << "Erreur bind : " << Sockets::GetError() << "\n";
+    sockaddr_in addr;
+    addr.sin_family = AF_INET;          // Utilisation de TCP
+    addr.sin_port = htons(port);        // Conversion du port en format réseau
+    if (inet_pton(AF_INET, ip.c_str(), &addr.sin_addr) <= 0) {
+        std::cerr << "Adresse IP invalide : " << ip << "\n";
         return false;
     }
+
+    int result = bind(m_socket, (sockaddr*)&addr, sizeof(addr));
+    if (result == SOCKET_ERROR)
+    {
+        std::cerr << "Erreur bind: " << WSAGetLastError() << "\n";
+        return SOCKET_ERROR;
+    }
+
     return true;
 }
 
-// bool TCPServer::Listen(SOCKET sckt, int backlog)
-// {
-//     int res = listen(mServer, SOMAXCONN);
-//     if (res != 0)
-//     {
-//         std::cout << "Erreur listen : " << Sockets::GetError;
-//         return SOCKET_ERROR;
-//     }
-//
-//     std::cout << "Serveur démarre " << "\n";
-// }
+
+//  [II] Listen - int listen(SOCKET sckt, int backlog) ;
+    /*
+        Place le socket dans un état lui permettant d'écouter les connexions entrantes.
+        - sckt est le socket auquel les clients vont se connecter.
+        - backlog est le nombre de connexions en attente qui peuvent être gérées.
+        La valeur SOMAXCONN peut être utilisée pour laisser le système choisir une valeur correcte selon sa configuration.
+     */
 
 bool TCPServer::Listen(int backlog)
 {
-    if (listen(mServer, backlog) != 0)
-    {
-        std::cout << "Erreur listen : " << Sockets::GetError() << "\n";
+    if (m_socket == INVALID_SOCKET) {
+        std::cerr << "Socket non créé\n";
+        return SOCKET_ERROR;
+    }
+
+    int result = listen(m_socket, backlog);
+    if (result == SOCKET_ERROR) {
+        std::cerr << "Erreur listen: " << WSAGetLastError() << "\n";
         return false;
     }
+
     return true;
 }
 
-// bool TCPServer::Accept(SOCKET server, struct sockaddr* addr, int* addrlen)
-// {
-//     sockaddr_in addr = { 0 };
-//     int len = sizeof(addr);
-//     SOCKET newClient = accept(server, reinterpret_cast<sockaddr*>(&addr), &len);
-//     if (newClient == INVALID_SOCKET)
-//     {
-//         std::cout << "Erreur accept : " << Sockets::GetError() << "\n";
-//         return INVALID_SOCKET;
-//     }
-// }
 
-SOCKET TCPServer::Accept(sockaddr* addr, int* addrlen)
+//  [III] Accept - SOCKET accept(SOCKET sckt, struct sockaddr* addr, int* addrlen);
+    /*
+        Accepte une connexion entrante.
+        - sckt est le socket serveur qui attend les connexions.
+        - addr recevra l'adresse du socket qui se connecte.
+        - addrlen est la taille de la structure pointée par addr.
+     */
+
+TCPSocket TCPServer::Accept()
 {
-    SOCKET clientSocket = accept(mServer, addr, addrlen);
+    sockaddr_in addr = {};
+    int addrLen = sizeof(addr);
+    
+    SOCKET clientSocket = accept(m_socket, (sockaddr*)&addr, &addrLen);
     if (clientSocket == INVALID_SOCKET)
     {
-        std::cout << "Erreur accept : " << Sockets::GetError() << "\n";
-        return INVALID_SOCKET;
+        std::cerr << "Erreur de connexion acceptée : " << WSAGetLastError() << "\n";
+        return TCPSocket();  // Retourne un socket invalide en cas d'erreur
     }
-    return clientSocket;
+    
+    TCPSocket client(clientSocket);
+    return client;
 }
+
+
+
