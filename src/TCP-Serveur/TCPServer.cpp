@@ -32,6 +32,7 @@ TCPServer::~TCPServer()
 bool TCPServer::Bind(const std::string& ip, unsigned short port)
 {
     sockaddr_in addr;
+    addr.sin_addr.s_addr = INADDR_ANY; // indique que toutes les sources seront acceptées
     addr.sin_family = AF_INET;          // Utilisation de TCP
     addr.sin_port = htons(port);        // Conversion du port en format réseau
     if (inet_pton(AF_INET, ip.c_str(), &addr.sin_addr) <= 0) {
@@ -83,20 +84,25 @@ bool TCPServer::Listen(int backlog)
         - addrlen est la taille de la structure pointée par addr.
      */
 
-TCPSocket TCPServer::Accept()
+bool TCPServer::Accept(TCPSocket* sckt)
 {
-    sockaddr_in addr = {};
-    int addrLen = sizeof(addr);
+    sockaddr_in addr = { 0 };
+    socklen_t addrLen = sizeof(addr);
     
-    SOCKET clientSocket = accept(m_socket, (sockaddr*)&addr, &addrLen);
-    if (clientSocket == INVALID_SOCKET)
+    SOCKET client = accept(m_socket, (sockaddr*)&addr, &addrLen);
+    
+    if (client == INVALID_SOCKET)
     {
         std::cerr << "Erreur de connexion acceptée : " << WSAGetLastError() << "\n";
-        return TCPSocket();  // Retourne un socket invalide en cas d'erreur
+        return false();  // Retourne un socket invalide en cas d'erreur
     }
-    
-    TCPSocket client(clientSocket);
-    return client;
+    (*sckt).setSocket(client);
+    return true;
+}
+
+void TCPServer::setSocket(SOCKET new_S)
+{
+    m_socket = new_S;
 }
 
 

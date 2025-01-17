@@ -12,7 +12,7 @@ int main()
     }
 
     TCPSocket clientSocket;
-    if (!clientSocket.Connect("127.0.0.1", 6666))
+    if (clientSocket.Connect("127.0.0.1", 6666) == true)
     {
         std::cerr << "Erreur connection : " << Sockets::GetError() << "\n";
         Sockets::Release();
@@ -21,7 +21,7 @@ int main()
     std::cout << "Connecté au serveur !\n";
 
     const std::string message = "Hello World !";
-    if (!clientSocket.Send(reinterpret_cast<const unsigned char*>(message.c_str()), message.size()))
+    if (clientSocket.Send(reinterpret_cast<const unsigned char*>(message.c_str()), message.size()) == false)
     {
         std::cerr << "Erreur envoi : " << Sockets::GetError() << "\n";
         Sockets::Release();
@@ -29,11 +29,11 @@ int main()
     }
     std::cout << "Message envoyé : " << message << "\n";
 
-    std::vector<unsigned char> buffer;
+    char buffer[1400]{};
     if (clientSocket.Receive(buffer))
     {
-        std::string response(buffer.begin(), buffer.end());
-        std::cout << "Réponse reçue : " << response << "\n";
+        //std::string response(buffer.begin(), buffer.end());
+        std::cout << "Réponse reçue : " << buffer << "\n";
     }
     else
     {

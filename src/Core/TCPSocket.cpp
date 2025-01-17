@@ -23,10 +23,12 @@ TCPSocket::~TCPSocket()
 bool TCPSocket::Connect(const std::string& ipaddress, unsigned short port)
 {
     sockaddr_in server;
-    inet_pton(AF_INET, "127.0.0.1", &server.sin_addr.s_addr);
+    if (inet_pton(AF_INET, "127.0.0.1", &server.sin_addr) <= 0)
+        return true; // Erreur
+
     server.sin_family = AF_INET;
     server.sin_port = htons(port);
-    return connect(m_socket, reinterpret_cast<sockaddr*>(&server), sizeof(server)) != 0;
+    return connect(m_socket, (sockaddr*)&server, sizeof(server)) == SOCKET_ERROR;
 }
 
 
@@ -53,8 +55,7 @@ bool TCPSocket::Connect(const std::string& ipaddress, unsigned short port)
 bool TCPSocket::Send(const unsigned char* data, unsigned short len)
 {
     unsigned short networkLen = htons(len);
-    return send(m_socket, reinterpret_cast<const char*>(& networkLen), sizeof(networkLen), 0) == sizeof(networkLen)
-        && send(m_socket, reinterpret_cast<const char*>(data), len, 0) == len;
+    return send(m_socket, reinterpret_cast<const char*>(data), len, 0) == len;
 }
 
 
@@ -68,32 +69,21 @@ bool TCPSocket::Send(const unsigned char* data, unsigned short len)
      */
 
 //  [II-Protocole] Modification de Receive
-bool TCPSocket::Receive(std::vector<unsigned char>& buffer)
+bool TCPSocket::Receive(char* buffer)
 {
-    unsigned short expectedSize;
-    int pending = recv(m_socket, reinterpret_cast<char*>(&expectedSize), sizeof(expectedSize), 0);
-    if ( pending <= 0 || pending != sizeof(unsigned short) )
+
+    int c = recv(m_socket, buffer, 1400, 0);
+    if ( c<= 0)
     {
         std::cout << "Receive failed : " << Sockets::GetError() << "\n";
         return false;
     }
-	
-    expectedSize = ntohs(expectedSize);
-    buffer.resize(expectedSize);
-    int receivedSize = 0;
-    do {
-        int ret = recv(m_socket, reinterpret_cast<char*>(&buffer[receivedSize]), (expectedSize - receivedSize) * sizeof(unsigned char), 0);
-        if ( ret <= 0 )
-        {
-            std::cout << "Receive buffer can't receive all data : " << Sockets::GetError() << "\n";
-            buffer.clear();
-            return false;
-        }
-        else
-        {
-            receivedSize += ret;
-        }
-    } while ( receivedSize < expectedSize );
+
     return true;
-} 
+}
+void TCPSocket::setSocket(SOCKET new_S)
+{
+    m_socket = new_S;
+}
+
 

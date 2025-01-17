@@ -30,34 +30,38 @@ int main()
 
     while (true) // Boucle principale du serveur
     {
-        TCPSocket client = server.Accept();
-        if (client.Send(nullptr, 0)) // Vérifie si le socket est valide
+        TCPSocket client;
+        if (server.Accept(&client) == false)
         {
-            std::cerr << "Erreur acceptation : " << Sockets::GetError() << "\n";
-            continue; // Ignore cette connexion et retourne à l'écoute
+            std::cout << "Acceptation invalide : " <<Sockets::GetError() << "\n";
+            return 0;
         }
+      
+        //if (client.Send(nullptr, 0)) // Vérifie si le socket est valide
+        //{
+        //    std::cerr << "Erreur acceptation : " << Sockets::GetError() << "\n";
+        //    continue; // Ignore cette connexion et retourne à l'écoute
+        //}
         std::cout << "Connexion acceptée !\n";
 
-        while (true) 
+        char buffer[1400]{};
+        if (!client.Receive(buffer)) 
         {
-            std::vector<unsigned char> buffer;
-            if (!client.Receive(buffer)) 
-            {
-                std::cerr << "Le client s'est déconnecté ou une erreur s'est produite.\n";
-                break; 
-            }
-
-            std::string receivedMessage(buffer.begin(), buffer.end());
-            std::cout << "Message reçu : " << receivedMessage << "\n";
-
-            const std::string response = "Message reçu";
-            if (!client.Send(reinterpret_cast<const unsigned char*>(response.c_str()), response.size()))
-            {
-                std::cerr << "Erreur envoi : " << Sockets::GetError() << "\n";
-                break; 
-            }
-            std::cout << "Réponse envoyée : " << response << "\n";
+            std::cerr << "Le client s'est déconnecté ou une erreur s'est produite.\n";
+            break; 
         }
+
+        //std::string receivedMessage(buffer.begin(), buffer.end());
+        std::cout << "Message reçu : " << buffer << "\n";
+
+        const std::string response = "Message reçu";
+        if (!client.Send(reinterpret_cast<const unsigned char*>(response.c_str()), response.size()))
+        {
+            std::cerr << "Erreur envoi : " << Sockets::GetError() << "\n";
+            break; 
+        }
+        std::cout << "Réponse envoyée : " << response << "\n";
+        
 
         std::cout << "Fin de la connexion avec le client.\n";
     }

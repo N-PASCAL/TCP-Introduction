@@ -15,10 +15,15 @@ public:
 
     bool Connect(const std::string& ipAddress, unsigned short port);
     bool Send(const unsigned char* data, unsigned short len);
-    bool Receive(std::vector<unsigned char>& buffer);
+    bool Receive(char* buffer);
+
+    SOCKET getSocket() { return m_socket; }
+    void setSocket(SOCKET new_S);
+
 
 private:
     SOCKET m_socket;
+    
 };
 
 #endif 

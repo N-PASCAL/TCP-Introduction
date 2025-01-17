@@ -16,8 +16,11 @@ public:
 
     bool Bind(const std::string& ip, unsigned short port);
     bool Listen(int backlog = SOMAXCONN); 
-    TCPSocket Accept();
+    bool Accept(TCPSocket* sckt);
     
+    SOCKET getSocket() { return m_socket; }
+    void setSocket(SOCKET new_S);
+
 private:
     SOCKET m_socket; 
 };
