@@ -1,10 +1,8 @@
 #ifndef TCPSOCKET_H
 #define TCPSOCKET_H
-#pragma once
 
 #include "Sockets.h"
 #include <string>
-#include <vector>
 
 class TCPSocket
 {
@@ -18,7 +16,7 @@ public:
     bool Receive(char* buffer);
 
     SOCKET getSocket() { return m_socket; }
-    void setSocket(SOCKET new_S);
+    void SetSocket(SOCKET new_S);
 
 
 private:

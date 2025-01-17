@@ -1,11 +1,7 @@
 #ifndef TCPSERVER_H
 #define TCPSERVER_H
 
-#include <WinSock2.h>
-#include <string>
-
 #include "TCPSocket.h"
-
 
 class TCPServer
 {

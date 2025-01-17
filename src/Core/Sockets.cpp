@@ -1,4 +1,5 @@
 #include "Sockets.h"
+#include <WS2tcpip.h>
 
 
 namespace Sockets

@@ -1,6 +1,8 @@
 #include "TCPSocket.h"
 #include <iostream>
 #include <sstream>
+#include <WS2tcpip.h>
+
 
 TCPSocket::TCPSocket()
 {
@@ -24,11 +26,14 @@ bool TCPSocket::Connect(const std::string& ipaddress, unsigned short port)
 {
     sockaddr_in server;
     if (inet_pton(AF_INET, "127.0.0.1", &server.sin_addr) <= 0)
-        return true; // Erreur
+    {
+        std::cerr << "[ERROR] : Client was not connected ! [" << Sockets::GetError() << "]\n";
+        return true;
+    }
 
     server.sin_family = AF_INET;
     server.sin_port = htons(port);
-    return connect(m_socket, (sockaddr*)&server, sizeof(server)) == SOCKET_ERROR;
+    return connect(m_socket, reinterpret_cast<sockaddr*>(&server), sizeof(server)) == SOCKET_ERROR;
 }
 
 
@@ -39,17 +44,6 @@ bool TCPSocket::Connect(const std::string& ipaddress, unsigned short port)
         - datas les données à envoyer
         - len est la taille maximale des données à envoyer en octets.
         - flags est un masque d'options. Généralement 0.
-     */
-
-//  [I-Protocole] Modification de Send
-    /*
-        unsigned char : Permet de rester sur l'intervalle [0;255]
-        
-        Le protocole commence par envoyer la longueur des données, puis les données à proprement parler.
-        
-        Les conversions nécessaires pour le passage des paramètres à l'API sockets,
-        et enfin, on s'assure que les données envoyées l'ont été avec succès en vérifiant que
-        les tailles mises en file d'envoi sont celles attendues.
      */
 
 bool TCPSocket::Send(const unsigned char* data, unsigned short len)
@@ -68,20 +62,20 @@ bool TCPSocket::Send(const unsigned char* data, unsigned short len)
         - flags est un masque d'options. Généralement 0.
      */
 
-//  [II-Protocole] Modification de Receive
+
 bool TCPSocket::Receive(char* buffer)
 {
 
     int c = recv(m_socket, buffer, 1400, 0);
-    if ( c<= 0)
+    if (c <= 0)
     {
-        std::cout << "Receive failed : " << Sockets::GetError() << "\n";
+        std::cerr << "[ERROR] Receive failed : [" << Sockets::GetError() << "]\n";
         return false;
     }
-
     return true;
 }
-void TCPSocket::setSocket(SOCKET new_S)
+
+void TCPSocket::SetSocket(SOCKET new_S)
 {
     m_socket = new_S;
 }

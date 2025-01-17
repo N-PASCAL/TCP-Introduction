@@ -1,7 +1,9 @@
 #include "TCPServer.h"
-#include "Sockets.h"
+
 #include <iostream>
 #include <sstream>
+#include <WS2tcpip.h>
+
 
 TCPServer::TCPServer()
 {
@@ -9,7 +11,7 @@ TCPServer::TCPServer()
     if (m_socket == INVALID_SOCKET)
     {
         std::ostringstream error;
-        error << "Erreur initialisation server [" << Sockets::GetError() << "]";
+        error << "[ERROR] Server initialisation failed ! : [" << Sockets::GetError() << "]";
         throw std::runtime_error(error.str());
     }
 }
@@ -36,17 +38,16 @@ bool TCPServer::Bind(const std::string& ip, unsigned short port)
     addr.sin_family = AF_INET;          // Utilisation de TCP
     addr.sin_port = htons(port);        // Conversion du port en format réseau
     if (inet_pton(AF_INET, ip.c_str(), &addr.sin_addr) <= 0) {
-        std::cerr << "Adresse IP invalide : " << ip << "\n";
+        std::cerr << "[ERROR] IP adress not available : " << ip << "\n";
         return false;
     }
 
-    int result = bind(m_socket, (sockaddr*)&addr, sizeof(addr));
+    int result = bind(m_socket, reinterpret_cast<sockaddr*>(&addr), sizeof(addr));
     if (result == SOCKET_ERROR)
     {
-        std::cerr << "Erreur bind: " << WSAGetLastError() << "\n";
+        std::cerr << "[ERROR] Bind failed ! : [" << WSAGetLastError() << "]\n";
         return SOCKET_ERROR;
     }
-
     return true;
 }
 
@@ -62,16 +63,15 @@ bool TCPServer::Bind(const std::string& ip, unsigned short port)
 bool TCPServer::Listen(int backlog)
 {
     if (m_socket == INVALID_SOCKET) {
-        std::cerr << "Socket non créé\n";
+        std::cerr << "[ERROR] No socket created !\n";
         return SOCKET_ERROR;
     }
 
     int result = listen(m_socket, backlog);
     if (result == SOCKET_ERROR) {
-        std::cerr << "Erreur listen: " << WSAGetLastError() << "\n";
+        std::cerr << "[ERROR] Listen failed ! : [" << WSAGetLastError() << "]\n";
         return false;
     }
-
     return true;
 }
 
@@ -88,15 +88,14 @@ bool TCPServer::Accept(TCPSocket* sckt)
 {
     sockaddr_in addr = { 0 };
     socklen_t addrLen = sizeof(addr);
-    
-    SOCKET client = accept(m_socket, (sockaddr*)&addr, &addrLen);
+    SOCKET client = accept(m_socket, reinterpret_cast<sockaddr*>(&addr), &addrLen);
     
     if (client == INVALID_SOCKET)
     {
-        std::cerr << "Erreur de connexion acceptée : " << WSAGetLastError() << "\n";
-        return false();  // Retourne un socket invalide en cas d'erreur
+        std::cerr << "[ERROR] Client wasn't accepted ! : [" << WSAGetLastError() << "]\n";
+        return false; 
     }
-    (*sckt).setSocket(client);
+    sckt->SetSocket(client);
     return true;
 }
 
